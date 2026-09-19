@@ -1,0 +1,8 @@
+[package]
+name = "nomina"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "A grammar language for random name generators: validating parser and pretty printer."
+
+[dependencies]
