@@ -1,8 +1,8 @@
 # nomina
 
 A small text format for describing random name generators, plus a
-command-line tool that validates a `.nomina` file and can reformat it into
-a canonical layout.
+command-line tool that validates a `.nomina` file, can reformat it into a
+canonical layout, and can generate names from it.
 
 ## the problem
 
@@ -15,10 +15,9 @@ and trust that mistakes (a typo'd reference, a rule defined twice) get
 caught with a precise pointer to the exact character that's wrong, not a
 panic or a silently wrong result.
 
-This repository is the front end for that: a lexer, a recursive-descent
-parser, a validator, and a pretty printer. It does not generate names yet
-(see Status below) — right now it's the part that makes sure a `.nomina`
-file is well-formed before anything tries to use it.
+This repository is a lexer, a recursive-descent parser, a validator, a
+pretty printer, and a generator that walks a validated grammar and picks
+a random name out of it.
 
 ## the format
 
@@ -56,6 +55,8 @@ coda    = "n" | "r" | "th" | "s";
 ```
 cargo run -- check names.nomina
 cargo run -- fmt names.nomina
+cargo run -- gen names.nomina
+cargo run -- gen names.nomina 10
 ```
 
 `check` parses and validates the file, printing nothing but a one-line
@@ -68,6 +69,12 @@ names.nomina: grammar is valid (3 rules)
 `fmt` prints the canonical, reformatted version of the file to stdout, so
 it can be piped to a new file or compared against the original with
 `diff`.
+
+`gen` validates the file, then evaluates its `name` rule and prints one
+generated name per line, expanding references, picking one alternative at
+random out of each `|`, and including each `?`-marked piece about half
+the time. An optional count argument prints that many names instead of
+one.
 
 ## error messages
 
@@ -118,15 +125,19 @@ Comments are not preserved by `fmt` yet — see Status.
 
 ## status
 
-Implemented: lexer, parser, duplicate/undefined-rule validation, and the
-pretty printer described above.
+Implemented: lexer, parser, duplicate/undefined-rule validation, the
+pretty printer described above, and the `gen` command.
+
+`gen` bails out with an error, instead of overflowing the stack, if
+expanding `name` follows more than 200 nested rule references without
+hitting a literal — a stopgap until the validator can reject rule cycles
+outright.
 
 Not implemented yet:
 
-- actually generating a random name from a validated grammar
 - preserving comments when pretty-printing
 - weighted alternatives (`"common":5 | "rare":1`)
-- detecting infinite recursion between rules
+- detecting infinite recursion between rules ahead of time, at validation
 - string escapes and non-ASCII literal support beyond plain Unicode text
 
 ## building
