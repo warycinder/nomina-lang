@@ -19,11 +19,24 @@ pub struct Token {
     pub span: Span,
 }
 
+/// A `#` comment. `text` is everything after the `#` with trailing
+/// whitespace removed. `trailing` is true when a token precedes the
+/// comment on the same line, which the pretty printer needs to tell a
+/// note on a rule from a comment sitting on its own line.
+#[derive(Debug, Clone)]
+pub struct Comment {
+    pub line: usize,
+    pub text: String,
+    pub trailing: bool,
+}
+
 pub struct Lexer {
     chars: Vec<char>,
     pos: usize,
     line: usize,
     col: usize,
+    last_token_line: usize,
+    comments: Vec<Comment>,
 }
 
 impl Lexer {
@@ -33,6 +46,8 @@ impl Lexer {
             pos: 0,
             line: 1,
             col: 1,
+            last_token_line: 0,
+            comments: Vec::new(),
         }
     }
 
@@ -59,19 +74,29 @@ impl Lexer {
                     self.bump();
                 }
                 Some('#') => {
+                    let line = self.line;
+                    let trailing = self.last_token_line == line;
+                    self.bump();
+                    let mut text = String::new();
                     while let Some(c) = self.peek() {
                         if c == '\n' {
                             break;
                         }
+                        text.push(c);
                         self.bump();
                     }
+                    self.comments.push(Comment {
+                        line,
+                        text: text.trim_end().to_string(),
+                        trailing,
+                    });
                 }
                 _ => break,
             }
         }
     }
 
-    pub fn tokenize(mut self) -> Result<Vec<Token>, Diagnostic> {
+    pub fn tokenize(mut self) -> Result<(Vec<Token>, Vec<Comment>), Diagnostic> {
         let mut tokens = Vec::new();
         loop {
             self.skip_trivia();
@@ -150,7 +175,8 @@ impl Lexer {
                 kind,
                 span: Span { line: start_line, col: start_col, len },
             });
+            self.last_token_line = self.line;
         }
-        Ok(tokens)
+        Ok((tokens, self.comments))
     }
 }

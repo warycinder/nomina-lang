@@ -31,8 +31,8 @@ fn main() -> ExitCode {
         }
     };
 
-    let tokens = match Lexer::new(&source).tokenize() {
-        Ok(tokens) => tokens,
+    let (tokens, comments) = match Lexer::new(&source).tokenize() {
+        Ok(result) => result,
         Err(diag) => {
             eprint!("{}", diag.render(path, &source));
             return ExitCode::FAILURE;
@@ -62,7 +62,7 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         "fmt" => {
-            print!("{}", pretty::pretty_print(&grammar));
+            print!("{}", pretty::pretty_print(&grammar, &comments));
             ExitCode::SUCCESS
         }
         "gen" => {

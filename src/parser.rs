@@ -12,6 +12,9 @@ pub struct Grammar {
 pub struct Rule {
     pub name: String,
     pub name_span: Span,
+    /// Line of the closing `;`, so comments can be matched to the rule
+    /// that spans them.
+    pub end_line: usize,
     pub expr: Expr,
 }
 
@@ -85,8 +88,8 @@ impl Parser {
         };
         self.expect(TokenKind::Equals, "`=`")?;
         let expr = self.parse_alt()?;
-        self.expect(TokenKind::Semicolon, "`;`")?;
-        Ok(Rule { name, name_span: name_tok.span, expr })
+        let semi = self.expect(TokenKind::Semicolon, "`;`")?;
+        Ok(Rule { name, name_span: name_tok.span, end_line: semi.span.line, expr })
     }
 
     fn parse_alt(&mut self) -> Result<Expr, Diagnostic> {

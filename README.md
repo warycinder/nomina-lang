@@ -121,12 +121,15 @@ title =
     ;
 ```
 
-Comments are not preserved by `fmt` yet — see Status.
+`fmt` keeps comments. A comment above a rule stays above it, a lone
+comment at the end of a rule's last line stays there when the rule still
+fits on one line, and comments after the last rule stay at the end of the
+file. Any other comment inside a rule is moved to just above that rule.
 
 ## status
 
 Implemented: lexer, parser, duplicate/undefined-rule validation, the
-pretty printer described above, and the `gen` command.
+comment-preserving pretty printer described above, and the `gen` command.
 
 `gen` bails out with an error, instead of overflowing the stack, if
 expanding `name` follows more than 200 nested rule references without
@@ -135,7 +138,6 @@ outright.
 
 Not implemented yet:
 
-- preserving comments when pretty-printing
 - weighted alternatives (`"common":5 | "rare":1`)
 - detecting infinite recursion between rules ahead of time, at validation
 - string escapes and non-ASCII literal support beyond plain Unicode text
